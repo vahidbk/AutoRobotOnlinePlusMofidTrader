@@ -1,1 +1,1 @@
-python3 test.py slave
+python3 autoRobotOnlinePlusMofidTrader.py slave

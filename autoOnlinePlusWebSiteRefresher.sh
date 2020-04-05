@@ -1,1 +1,1 @@
-python3 test.py master -one
+python3 autoRobotOnlinePlusMofidTrader.py master -one
