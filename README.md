@@ -23,5 +23,6 @@
 4-run autoOnlinePlusWebSiteRefresher.sh
     #./autoOnlinePlusWebSiteRefresher.sh
 
-5-run autoBuySymbol.sh
+5- sync time of os with time Server
+6-run autoBuySymbol.sh
     ./autoBuySymbol.sh
