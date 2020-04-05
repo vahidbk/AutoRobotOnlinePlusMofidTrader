@@ -28,7 +28,7 @@ refreshMinutes=5
 
 chromeWebDriverPath = '/usr/lib/chromium-browser/chromedriver'
 
-baseFolder="/home/me/Desktop/Code/Files/"    
+baseFolder="/home/me/Desktop/Code/temp/"    
 cookieFilename='MofidOnlineCookieFile'
 cookieFile = baseFolder+cookieFilename+'.json'
 chromeProfilePath=baseFolder+'ChromeProfile'
