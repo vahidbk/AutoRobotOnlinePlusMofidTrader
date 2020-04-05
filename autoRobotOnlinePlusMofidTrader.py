@@ -21,20 +21,29 @@ from selenium.webdriver.common.keys import Keys
 
 import sys
 import logging
+import os
 
-logFile='/home/me/Desktop/Code/logger.log'
+rootFolder=os.getcwd()+"/"
+baseFolder=rootFolder+"temp/"   
+try:
+    os.mkdir(baseFolder) 
+except:
+    pass
+
+logFile=rootFolder+'logger.log'
 refreshUrl='https://onlineplus.mofidonline.com/Home/Default/page-1'
 refreshMinutes=5
 
 chromeWebDriverPath = '/usr/lib/chromium-browser/chromedriver'
 
-baseFolder="/home/me/Desktop/Code/temp/"    
+
 cookieFilename='MofidOnlineCookieFile'
 cookieFile = baseFolder+cookieFilename+'.json'
 chromeProfilePath=baseFolder+'ChromeProfile'
-orderFile = baseFolder+'orderList.json'
+orderFile = rootFolder+'orderList.json'
 
 showUI = True
+
 
 class RealTimer:
     def setOffset(self, hourOffset, minuteOffset, secondOffset, microSecondOffset):
