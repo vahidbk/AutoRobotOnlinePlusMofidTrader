@@ -22,7 +22,7 @@ from selenium.webdriver.common.keys import Keys
 import sys
 import logging
 
-logFile='/home/me/Desktop/Code/Files/logger.log'
+logFile='/home/me/Desktop/Code/logger.log'
 refreshUrl='https://onlineplus.mofidonline.com/Home/Default/page-1'
 refreshMinutes=5
 
@@ -32,7 +32,7 @@ baseFolder="/home/me/Desktop/Code/Files/"
 cookieFilename='MofidOnlineCookieFile'
 cookieFile = baseFolder+cookieFilename+'.json'
 chromeProfilePath=baseFolder+'ChromeProfile'
-orderFile = baseFolder+'MofidTraderAutoSendOrder.json'
+orderFile = baseFolder+'orderList.json'
 
 showUI = True
 
