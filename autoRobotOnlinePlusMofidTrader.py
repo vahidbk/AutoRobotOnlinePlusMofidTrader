@@ -119,7 +119,28 @@ def loadChromeAndWaitToLoad():
         SecondTimeTimerThread = threading.Thread(target=RealTimeTimerTriggerWorker)
         SecondTimeTimerThread.start()
 
+    def getMofidAccountData():
+        securitySettingFilename=rootFolder+'securitySetting.json'
+        username="TypeUserNameIn:"+securitySettingFilename
+        password="TypePasswordIn:"+securitySettingFilename
+        mofidAccountTable="mofidAccount"
+        try:
+            db = TinyDB(securitySettingFilename)
+            userTable = db.table(mofidAccountTable)
+            user = userTable.all()
+            username=user[0]["Username"]
+            password=user[0]["Password"]
+            db.close()
+        except:
+            print("Error in username and password Easy Trader.")
+            db.purge_table(mofidAccountTable)
+            userTable = db.table(mofidAccountTable)
+            userTable.insert({"Username":username, "Password":password})
+            db.close()
+        return {"username":username, "password":password}
+
     def checkIsLogin():
+        driver.switch_to.window(driver.window_handles[0])
         #<a class="signout " href="/Account/Logout">
         inputStr="//a[@class='signout ' and @href='/Account/Logout']"
         signOutElems = driver.find_elements_by_xpath(inputStr) 
@@ -137,14 +158,11 @@ def loadChromeAndWaitToLoad():
         options.add_argument('headless')
         options.add_argument('window-size=1920x1080')
         options.add_argument("disable-gpu")
-    options.add_argument("--log-level=3");
+    options.add_argument("--log-level=3")
     options.add_argument("user-data-dir="+chromeProfilePath) #Path to your chrome profile
     driver = webdriver.Chrome(executable_path=chromeWebDriverPath, options=options)
     atexit.register(onClose)
     driver.get(refreshUrl)
-    while(True):
-        if (checkIsLogin()):break
-        time.sleep(1)
     
     def autoRefreshChrome():
         def saveCookie2File():
@@ -158,14 +176,54 @@ def loadChromeAndWaitToLoad():
             except Exception as err:
                 logger.error(f'Error in save cookie File: {err}') 
         def refresh():
+            driver.switch_to.window(driver.window_handles[0])
             driver.refresh()
             logger.info(str(datetime.datetime.now())+" Refreshed..")
-            
+        def loginWithMofidAccount():
+            while(True):
+                refresh()
+                time.sleep(2)
+                if (checkIsLogin()):
+                    break 
+                driver.get(refreshUrl)
+                elem = driver.find_element_by_class_name("mofid__input-button")
+                elem.click()
+
+                counter=0
+                mofidLoginWindowExist=False
+                while(True):
+                    if (len(driver.window_handles)==2):
+                        mofidLoginWindowExist=True
+                        break
+                    else:
+                        time.sleep(1)
+                        counter+=1
+                        if counter>10:break
+                if (mofidLoginWindowExist):
+                    driver.switch_to.window(driver.window_handles[1])
+                    username=driver.find_element_by_id("Username")
+                    password=driver.find_element_by_id("Password")
+                    loginButton=driver.find_element_by_id("submit_btn")
+                    mofidAccount=getMofidAccountData()
+                    username.send_keys(mofidAccount["username"])
+                    password.send_keys(mofidAccount["password"])
+                    loginButton.click()
+                driver.switch_to.window(driver.window_handles[0])
+                if (checkIsLogin()):
+                    break
+                time.sleep(10)
+                if (checkIsLogin()):
+                    break    
+                time.sleep(45)
+                if (checkIsLogin()):
+                    break   
+            driver.switch_to_default_content()   
+    
         if not (checkIsLogin()):
-            logger.error("Error in Login!!")
-            return
+            loginWithMofidAccount()
         
         refresh()
+
         timeNow = datetime.datetime.now()
         seconds=timeNow.second+60*(timeNow.minute+60*timeNow.hour)+(0.000001*timeNow.microsecond)
         if (seconds>=60*(28+60*8) and seconds<=60*(32+60*8)):
