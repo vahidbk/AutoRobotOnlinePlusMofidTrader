@@ -343,7 +343,8 @@ if __name__ == "__main__":
 
     logger.info('Waiting...')
 
-    #TODO 13990102:CreateUI For operation in order file
+    #TODO: create a mofid login with out capcha
+    #TODO  13990102:CreateUI For operation in order file
     #Done by linux network time is done: time : sudo ntpdate time.windows.com
     #done multi chrome with multi folder and ... with multi cookie loader from file
     #done Done with simple way :Mirtual exclution with cookieFile
