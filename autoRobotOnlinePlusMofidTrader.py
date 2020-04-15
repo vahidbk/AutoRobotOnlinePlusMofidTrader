@@ -139,7 +139,7 @@ def loadChromeAndWaitToLoad():
         return {"username":username, "password":password}
 
     def checkIsLogin():
-        driver.switch_to.window(driver.window_handles[0])
+        #driver.switch_to.window(driver.window_handles[0])
         #<a class="signout " href="/Account/Logout">
         inputStr="//a[@class='signout ' and @href='/Account/Logout']"
         signOutElems = driver.find_elements_by_xpath(inputStr) 
