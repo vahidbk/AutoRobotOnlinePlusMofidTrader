@@ -43,7 +43,7 @@ chromeProfilePath=baseFolder+'ChromeProfile'
 orderFile = rootFolder+'orderList.json'
 
 showUI = True
-
+epsilonSecond4RealTimer=10
 
 class RealTimer:
     def setOffset(self, hourOffset, minuteOffset, secondOffset, microSecondOffset):
@@ -71,9 +71,8 @@ class RealTimer:
                         break
                     if (secondsTarget-seconds>60):
                         time.sleep(1)
-                #     processThread = threading.Thread(target=doOperation, args=[params])
-                #     processThread.start()
-                doOperation(params)
+                if (seconds-secondsTarget<epsilonSecond4RealTimer):
+                    doOperation(params)
 
         self.sortedList = sortSortedListBySecondTarget(self.sortedList)
         threading.Thread(target=RealTimeTimerTriggerWorker).start()
