@@ -32,7 +32,7 @@ except:
 
 logFile=rootFolder+'logger.log'
 refreshUrl='https://onlineplus.mofidonline.com/Home/Default/page-1'
-refreshMinutes=5
+refreshMinutes=10
 
 chromeWebDriverPath = '/usr/lib/chromium-browser/chromedriver'
 
@@ -139,7 +139,6 @@ def loadChromeAndWaitToLoad():
         return {"username":username, "password":password}
 
     def checkIsLogin():
-        #driver.switch_to.window(driver.window_handles[0])
         #<a class="signout " href="/Account/Logout">
         inputStr="//a[@class='signout ' and @href='/Account/Logout']"
         signOutElems = driver.find_elements_by_xpath(inputStr) 
@@ -162,7 +161,7 @@ def loadChromeAndWaitToLoad():
     driver = webdriver.Chrome(executable_path=chromeWebDriverPath, options=options)
     atexit.register(onClose)
     driver.get(refreshUrl)
-    
+
     def autoRefreshChrome():
         def saveCookie2File():
             cookies=driver.get_cookies()
@@ -175,9 +174,12 @@ def loadChromeAndWaitToLoad():
             except Exception as err:
                 logger.error(f'Error in save cookie File: {err}') 
         def refresh():
-            driver.switch_to.window(driver.window_handles[0])
-            driver.refresh()
-            logger.info(str(datetime.datetime.now())+" Refreshed..")
+            try:
+                driver.refresh()
+                logger.info(str(datetime.datetime.now())+" Soft Refreshed..")
+            except Exception as err:
+                driver.get(refreshUrl)
+                logger.info(str(datetime.datetime.now())+" Hard Refreshed..")
         def loginWithMofidAccount():
             while(True):
                 refresh()
@@ -200,6 +202,7 @@ def loadChromeAndWaitToLoad():
                         if counter>10:break
                 if (mofidLoginWindowExist):
                     driver.switch_to.window(driver.window_handles[1])
+                    time.sleep(1)
                     username=driver.find_element_by_id("Username")
                     password=driver.find_element_by_id("Password")
                     loginButton=driver.find_element_by_id("submit_btn")
@@ -233,6 +236,7 @@ def loadChromeAndWaitToLoad():
         doOperationAt_Time(autoRefreshChrome, None, "Chrome refresh Triggered", \
             targetTime.hour, targetTime.minute, targetTime.second, 0.0,\
                 0,0,0,0)
+    
     
     autoRefreshChrome()
 
@@ -382,7 +386,7 @@ def initLogger():
 
 if __name__ == "__main__":
     name="slave"
-    cookieFileIndex = ""
+    cookieFileIndex = "-one"
     if(len(sys.argv)>1):
         name = sys.argv[1].strip().lower()
     if(len(sys.argv)>2):
@@ -400,8 +404,8 @@ if __name__ == "__main__":
 
     logger.info('Waiting...')
 
-    #TODO: create a mofid login with out capcha
     #TODO  13990102:CreateUI For operation in order file
+    #Done: create a mofid login with out capcha
     #Done by linux network time is done: time : sudo ntpdate time.windows.com
     #done multi chrome with multi folder and ... with multi cookie loader from file
     #done Done with simple way :Mirtual exclution with cookieFile
