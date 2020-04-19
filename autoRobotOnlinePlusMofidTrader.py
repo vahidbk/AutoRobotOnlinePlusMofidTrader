@@ -42,7 +42,7 @@ cookieFile = baseFolder+cookieFilename+'.json'
 chromeProfilePath=baseFolder+'ChromeProfile'
 orderFile = rootFolder+'orderList.json'
 
-showUI = True
+showUI = False
 epsilonSecond4RealTimer=10
 
 class RealTimer:
@@ -73,7 +73,8 @@ class RealTimer:
                         time.sleep(1)
                 if (seconds-secondsTarget<epsilonSecond4RealTimer):
                     doOperation(params)
-
+                else:
+                    logger.info("TimerRejected :"+str(params))            
         self.sortedList = sortSortedListBySecondTarget(self.sortedList)
         threading.Thread(target=RealTimeTimerTriggerWorker).start()
 
@@ -175,6 +176,7 @@ def loadChromeAndWaitToLoad():
                 logger.error(f'Error in save cookie File: {err}') 
         def refresh():
             try:
+                driver.switch_to.window(driver.window_handles[0])
                 driver.refresh()
                 logger.info(str(datetime.datetime.now())+" Soft Refreshed..")
             except Exception as err:
