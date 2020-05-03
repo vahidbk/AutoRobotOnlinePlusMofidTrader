@@ -42,8 +42,9 @@ cookieFile = baseFolder+cookieFilename+'.json'
 chromeProfilePath=baseFolder+'ChromeProfile'
 orderFile = rootFolder+'orderList.json'
 
-showUI = False
+showUI = True
 epsilonSecond4RealTimer=10
+loginWithMofid=False
 
 class RealTimer:
     def setOffset(self, hourOffset, minuteOffset, secondOffset, microSecondOffset):
@@ -162,7 +163,16 @@ def loadChromeAndWaitToLoad():
     driver = webdriver.Chrome(executable_path=chromeWebDriverPath, options=options)
     atexit.register(onClose)
     driver.get(refreshUrl)
-
+    if not (loginWithMofid):
+        username=driver.find_element_by_id("txtusername")
+        password=driver.find_element_by_id("txtpassword")
+        mofidAccount=getMofidAccountData()
+        username.send_keys(mofidAccount["username"])
+        password.send_keys(mofidAccount["password"])
+        while(True):
+            if (checkIsLogin()):
+                break
+        
     def autoRefreshChrome():
         def saveCookie2File():
             cookies=driver.get_cookies()
@@ -224,7 +234,10 @@ def loadChromeAndWaitToLoad():
             driver.switch_to_default_content()   
     
         if not (checkIsLogin()):
-            loginWithMofidAccount()
+            if not (loginWithMofid):
+                exit(0)
+            else:
+                loginWithMofidAccount()
         
         refresh()
 
