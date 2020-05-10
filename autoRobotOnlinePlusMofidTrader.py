@@ -44,7 +44,7 @@ orderFile = rootFolder+'orderList.json'
 
 showUI = True
 epsilonSecond4RealTimer=10
-loginWithMofid=False
+loginWithMofid=True
 
 class RealTimer:
     def setOffset(self, hourOffset, minuteOffset, secondOffset, microSecondOffset):
@@ -75,7 +75,7 @@ class RealTimer:
                 if (seconds-secondsTarget<epsilonSecond4RealTimer):
                     doOperation(params)
                 else:
-                    logger.info("TimerRejected :"+str(params))            
+                    logger.info("TimerRejected :"+str(params))   
         self.sortedList = sortSortedListBySecondTarget(self.sortedList)
         threading.Thread(target=RealTimeTimerTriggerWorker).start()
 
@@ -271,6 +271,11 @@ def loadAllsendBuyRequest():
         try:
             sendOrderurl="https://onlineplus.mofidonline.com/Customer/SendOrder"
             
+            if (orderData["type"].lower()=="sell"):
+                typeOrder="86"
+            else:
+                typeOrder="65"
+                
             postData={\
                 "IsSymbolCautionAgreement":"false"
                 ,"CautionAgreementSelected":"false"
@@ -283,7 +288,7 @@ def loadAllsendBuyRequest():
                 ,"maxShow":"0"
                 ,"orderId":"0"
                 ,"isin":orderData["isin"]
-                ,"orderSide":"65"
+                ,"orderSide":typeOrder
                 ,"orderValidity":"74"
                 ,"orderValiditydate":"null"
                 ,"shortSellIsEnabled":"false"
@@ -332,11 +337,12 @@ def loadAllsendBuyRequest():
                     , data=jsons.dumps(postData), headers=headers, cookies=cookies\
                     , verify = False, timeout=(10, 20))
                 dateTimeResponse=datetime.datetime.now()
-                logger.info("Calc\t"+orderData["cookieFileIndex"]+"\t"\
-                    + str("%.6f" % (dateTimeRequest.second+dateTimeRequest.microsecond*0.000001))+"\t"\
-                    + str("%.6f" % (dateTimeResponse.second+dateTimeResponse.microsecond*0.000001))+"\t"\
-                    + str("%.6f" % ((dateTimeResponse-dateTimeRequest).microseconds*0.000001))+"\t"\
-                    + str("%.6f" % (response.elapsed.total_seconds()))+"\t"
+                logger.info("Calc:\t"+orderData["cookieFileIndex"]+"\t"\
+                    + str("Sym:" + (orderData["isinName"]))+"\t"\
+                    + str("Vol:" + (orderData["orderCount"]))+"\t"\
+                    + str("Request:%.6f" % (dateTimeResponse.second+dateTimeResponse.microsecond*0.000001))+"\t"\
+                    + str("Response:%.6f" % ((dateTimeResponse-dateTimeRequest).microseconds*0.000001))+"\t"\
+                    + str("Elapsed:%.6f" % (response.elapsed.total_seconds()))+"\t"
                     + str(jsons.loads(response.content)["MessageDesc"])+"\t"
                     + str(orderData["comment"]))
                     # +"\n"
