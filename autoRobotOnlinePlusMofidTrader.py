@@ -32,7 +32,7 @@ except:
 
 logFile=rootFolder+'logger.log'
 refreshUrl='https://onlineplus.mofidonline.com/Home/Default/page-1'
-refreshMinutes=10
+refreshMinutes=15
 
 chromeWebDriverPath = '/usr/lib/chromium-browser/chromedriver'
 
@@ -41,6 +41,7 @@ cookieFilename='MofidOnlineCookieFile'
 cookieFile = baseFolder+cookieFilename+'.json'
 chromeProfilePath=baseFolder+'ChromeProfile'
 orderFile = rootFolder+'orderList.json'
+lockFile=cookieFile+".lock"
 
 showUI = True
 epsilonSecond4RealTimer=10
@@ -239,13 +240,11 @@ def loadChromeAndWaitToLoad():
             else:
                 loginWithMofidAccount()
         
-        refresh()
-
-        timeNow = datetime.datetime.now()
-        seconds=timeNow.second+60*(timeNow.minute+60*timeNow.hour)+(0.000001*timeNow.microsecond)
-        if (seconds>=60*(28+60*8) and seconds<=60*(32+60*8)):
-            time.sleep(60*3+1)
-        saveCookie2File()
+        from filelock import Timeout, FileLock
+        lock = FileLock(lockFile)
+        with lock:
+            refresh()
+            saveCookie2File()
 
         targetTime = datetime.datetime.now() + datetime.timedelta(minutes=refreshMinutes)
         doOperationAt_Time(autoRefreshChrome, None, "Chrome refresh Triggered", \
@@ -259,12 +258,15 @@ def loadChromeAndWaitToLoad():
 def loadAllsendBuyRequest():
     def sendBuyRequestNow(orderData):
         def loadCookieFromFile(filename):
-            db = TinyDB(filename)
-            cookiesDB = db.all()
-            cookies={}
-            for cookieDB in cookiesDB:
-                cookies[cookieDB["name"]]=cookieDB["value"]
-            db.close()
+            from filelock import Timeout, FileLock
+            lock = FileLock(lockFile)
+            with lock:
+                db = TinyDB(filename)
+                cookiesDB = db.all()
+                cookies={}
+                for cookieDB in cookiesDB:
+                    cookies[cookieDB["name"]]=cookieDB["value"]
+                db.close()
             return cookies
         
         requests.packages.urllib3.disable_warnings()
@@ -294,7 +296,6 @@ def loadAllsendBuyRequest():
                 ,"shortSellIsEnabled":"false"
                 ,"shortSellIncentivePercent":"0"
             }
-            
             headers = {\
                 # ":method":"POST"\
                 # ,":scheme":"https"\
@@ -312,7 +313,6 @@ def loadAllsendBuyRequest():
                 ,"referer":"https://onlineplus.mofidonline.com/Home/Default/page-1"\
                 ,"accept-encoding":"gzip, deflate, br"\
                 ,"accept-language":"en-US,en;q=0.9"\
-                
                 #,"cookie":
                 ## lastmessage-6=1
                 ## lastmessage-2=1060528
