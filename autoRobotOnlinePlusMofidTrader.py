@@ -1,7 +1,6 @@
 #python3 -c 'import datetime;import os;print(datetime.datetime.now());os.system("ping -c 10 google.com")'
 
 import requests
-import requests
 from bs4 import BeautifulSoup
 import requests.packages.urllib3
 import jsons
@@ -22,6 +21,8 @@ from selenium.webdriver.common.keys import Keys
 import sys
 import logging
 import os
+
+import sqlite3
 
 rootFolder=os.getcwd()+"/"
 baseFolder=rootFolder+"temp/"   
@@ -46,6 +47,8 @@ lockFile=cookieFile+".lock"
 showUI = True
 epsilonSecond4RealTimer=10
 loginWithMofid=True
+
+
 
 class RealTimer:
     def setOffset(self, hourOffset, minuteOffset, secondOffset, microSecondOffset):
@@ -73,6 +76,8 @@ class RealTimer:
                         break
                     if (secondsTarget-seconds>60):
                         time.sleep(1)
+                    else:
+                        time.sleep(0.000001)
                 if (seconds-secondsTarget<epsilonSecond4RealTimer):
                     doOperation(params)
                 else:
@@ -250,8 +255,6 @@ def loadChromeAndWaitToLoad():
         doOperationAt_Time(autoRefreshChrome, None, "Chrome refresh Triggered", \
             targetTime.hour, targetTime.minute, targetTime.second, 0.0,\
                 0,0,0,0)
-    
-    
     autoRefreshChrome()
 
 
@@ -297,11 +300,6 @@ def loadAllsendBuyRequest():
                 ,"shortSellIncentivePercent":"0"
             }
             headers = {\
-                # ":method":"POST"\
-                # ,":scheme":"https"\
-                # ,":authority":"onlineplus.mofidonline.com"\
-                # ,":path":"/Customer/SendOrder"\
-                #,"content-length":"371"\
                 "sec-fetch-dest":"empty"\
                 ,"x-requested-with":"XMLHttpRequest"\
                 ,'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'\
@@ -313,21 +311,6 @@ def loadAllsendBuyRequest():
                 ,"referer":"https://onlineplus.mofidonline.com/Home/Default/page-1"\
                 ,"accept-encoding":"gzip, deflate, br"\
                 ,"accept-language":"en-US,en;q=0.9"\
-                #,"cookie":
-                ## lastmessage-6=1
-                ## lastmessage-2=1060528
-                ## lastmessage-4=1
-                ## "UserHasReadedHelp=true; 
-                # _ga=GA1.2.816572881.1569671965;
-                #  GuidedTourVersion=1; 
-                # SiteVersion=3.7.4; 
-                # _gid=GA1.2.252721106.1584126160; 
-                ## _AuthCookie={\"t\":\"\",\"p\":1}; 
-                # silverse=105h0lilzyxndpiigtkdvj3f; 
-                # crisp-client%2Fsession%2Fe95056ad-2681-452d-976d-0c2a304165c9=session_bb27ba3c-c5ad-41aa-a983-e6b1cf022809; 
-                ## ASP.NET_SessionId=ru0y0x5yfcht1gnotz1keng1;
-                # .ASPXAUTH=A01484135FB8B5662BFD98E7E64EAAEEA18BF3BB08E9C43D7E1D9044A547705A483920EB562FA06DB6885AB016B6CC800492CDC1974BE30AE04BCEBE639F7D3061AE0842E5F1FC558D8B275918F085A210B21C4B1541BFA5997C60080F89107DA00A171B8BADBB29063BAE6A9326CAAFC98C4376375FF02987EEBCD653EA55C7; 
-                # Token=4f6d168e-62df-46aa-991b-a84f912140e8"
             }
             localCookieFilename = baseFolder+cookieFilename+orderData["cookieFileIndex"]+'.json'
             cookies = loadCookieFromFile(localCookieFilename)
@@ -405,8 +388,312 @@ def initLogger():
     logger.setLevel(logging.INFO)       
     return logger
 
+#Todo compelete this function
+def monitoringAndSendRequest(symbolISIN, startDateTime, EndDateTime, orderConditions):
+    def loadCookieFromFile(filename):
+        from filelock import Timeout, FileLock
+        lock = FileLock(lockFile)
+        with lock:
+            db = TinyDB(filename)
+            cookiesDB = db.all()
+            cookies={}
+            for cookieDB in cookiesDB:
+                cookies[cookieDB["name"]]=cookieDB["value"]
+            db.close()
+        return cookies
+    def sendRequest(orderTypeInput, orderCountInput, orderPriceInput, orderisinInput, cookieFileIndexInput, orderCommentInput):
+        
+        requests.packages.urllib3.disable_warnings()
+        try:
+            sendOrderurl="https://onlineplus.mofidonline.com/Customer/SendOrder"
+            
+            if (orderTypeInput.lower()=="sell"):
+                typeOrder="86"
+            else:
+                typeOrder="65"
+                
+            postData={\
+                "IsSymbolCautionAgreement":"false"
+                ,"CautionAgreementSelected":"false"
+                ,"IsSymbolSepahAgreement":"false"
+                ,"SepahAgreementSelected":"false"
+                ,"orderCount":orderCountInput
+                ,"orderPrice":orderPriceInput
+                ,"FinancialProviderId":"1"
+                ,"minimumQuantity":""
+                ,"maxShow":"0"
+                ,"orderId":"0"
+                ,"isin":orderisinInput
+                ,"orderSide":typeOrder
+                ,"orderValidity":"74"
+                ,"orderValiditydate":"null"
+                ,"shortSellIsEnabled":"false"
+                ,"shortSellIncentivePercent":"0"
+            }
+            headers = {\
+                "sec-fetch-dest":"empty"\
+                ,"x-requested-with":"XMLHttpRequest"\
+                ,'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'\
+                ,"content-type":"application/json"\
+                ,"accept":"*/*"\
+                ,"origin":"https://onlineplus.mofidonline.com"\
+                ,"sec-fetch-site":"same-origin"\
+                ,"sec-fetch-mode":"cors"\
+                ,"referer":"https://onlineplus.mofidonline.com/Home/Default/page-1"\
+                ,"accept-encoding":"gzip, deflate, br"\
+                ,"accept-language":"en-US,en;q=0.9"\
+            }
+            localCookieFilename = baseFolder+cookieFilename+cookieFileIndexInput+'.json'
+            cookies = loadCookieFromFile(localCookieFilename)
+            def requestWorker():
+                dateTimeRequest=datetime.datetime.now()
+                response = requests.post(sendOrderurl\
+                    , data=jsons.dumps(postData), headers=headers, cookies=cookies\
+                    , verify = False, timeout=(10, 20))
+                dateTimeResponse=datetime.datetime.now()
+                logger.info("Calc:\t"+cookieFileIndexInput+"\t"\
+                    + str("Sym:" + orderisinInput)+"\t"\
+                    + str("Vol:" + orderCountInput)+"\t"\
+                    + str("Request:%.6f" % (dateTimeResponse.second+dateTimeResponse.microsecond*0.000001))+"\t"\
+                    + str("Response:%.6f" % ((dateTimeResponse-dateTimeRequest).microseconds*0.000001))+"\t"\
+                    + str("Elapsed:%.6f" % (response.elapsed.total_seconds()))+"\t"\
+                    + str(jsons.loads(response.content)["MessageDesc"])+"\t"\
+                    + str(orderCommentInput))
+            threading.Thread(target=requestWorker).start()
+
+        except Exception as err:
+            logger.error(f'Other error occurred: {err}') 
+    def monitoring(symbolISIN):
+        def getInfoSymbol(symbolISIN):
+            info= {\
+                'id': 'XXXXXXXXXXXX 139XX/XX/XX - XX:XX:XX',
+                'isin': 'XXXXXXXXXXXX',\
+                'lastTradePrice': 0,\
+                'closePrice': 0,\
+                'highRangePrice': 0,\
+                'lowRangePrice': 0,\
+                'yesterdayClosePrice': 0,\
+                'DateTime': '139XX/XX/XX - XX:XX:XX',\
+                'Date': '139XX/XX/XX',\
+                'Time': 'XX:XX:XX',\
+                'closePointRelativePrice': 0,\
+                'closePointRelativePercent': 0,\
+                'lastPointRelativePrice': 0,\
+                'lastPointRelativePercent': 0,\
+                'buyToToSellPower1Row': 0,\
+                'buyToToSellPower5Rows': 0,\
+                'realBuyVolume': 0,\
+                'realBuyNumber': 0,\
+                'realSellVolume': 0,\
+                'realSellNumber': 0,\
+                'legalBuyVolume': 0,\
+                'legalBuyNumber': 0,\
+                'legalSellVolume': 0,\
+                'legalSellNumber': 0,\
+                'buyToSellPowerToday': 0,\
+                'buyToSellLegalPowerToday': 0,\
+                'legalBuyPercent': 0,\
+                'legalSellPercent': 0}
+            try:
+                headers = {\
+                            "origin":"https://onlineplus.mofidonline.com"\
+                            ,"sec-fetch-dest":"empty"\
+                            ,"user-agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/80.0.3987.163 Chrome/80.0.3987.163 Safari/537.36"\
+                            ,"accept":"*/*"\
+                            ,"sec-fetch-site":"cross-site"\
+                            ,"sec-fetch-mode": "cors"\
+                            ,"referer":"https://onlineplus.mofidonline.com/Home/Default/page-1"\
+                            ,"accept-encoding":"gzip, deflate, br"\
+                            ,"accept-language":"en-US,en;q=0.9,fa;q=0.8"\
+                            }
+                url='https://core.tadbirrlc.com//StockFutureInfoHandler.ashx?{"Type":"getLightSymbolInfoAndQueue","la":"fa","nscCode":"'+symbolISIN+'"}&jsoncallback='
+
+                response = requests.get(url, headers=headers, verify = False, timeout=(10, 20))
+
+                stockFutureInfoHandler = (jsons.loads(response.content))
+                # info={}
+                info['isin'] = stockFutureInfoHandler['symbolinfo']['nc']
+                info['lastTradePrice'] = stockFutureInfoHandler['symbolinfo']['ltp']
+                info['closePrice'] = stockFutureInfoHandler['symbolinfo']['cp']
+                info['highRangePrice'] = stockFutureInfoHandler['symbolinfo']['ht']
+                info['lowRangePrice'] = stockFutureInfoHandler['symbolinfo']['lt']
+                info['yesterdayClosePrice'] = stockFutureInfoHandler['symbolinfo']['pcp']
+                info['DateTime'] = stockFutureInfoHandler['symbolinfo']['ltd']
+                info['id'] = info['isin'] + ' ' + info['DateTime']
+                info['Date'] = info['DateTime'][0:0+10]
+                info['Time'] = info['DateTime'][13:13+8]
+                info['closePointRelativePrice'] = stockFutureInfoHandler['symbolinfo']['cpv']
+                info['closePointRelativePercent'] = stockFutureInfoHandler['symbolinfo']['cpvp']
+                info['lastPointRelativePrice'] = stockFutureInfoHandler['symbolinfo']['lpv']
+                info['lastPointRelativePercent'] = stockFutureInfoHandler['symbolinfo']['lpvp']
+
+
+                bestBuyQuantity = float(stockFutureInfoHandler['symbolqueue']['Value'][0]['BestBuyQuantity'])+1
+                noBestBuy = float(stockFutureInfoHandler['symbolqueue']['Value'][0]['NoBestBuy']) + 1
+                bestSellQuantity = float(stockFutureInfoHandler['symbolqueue']['Value'][0]['BestSellQuantity'])+1
+                noBestSell = float(stockFutureInfoHandler['symbolqueue']['Value'][0]['NoBestSell']) + 1
+                buyToToSellPower = float(bestBuyQuantity/noBestBuy)/(bestSellQuantity/noBestSell)
+                info['buyToToSellPower1Row']=buyToToSellPower
+
+                bestBuyQuantity = 0
+                noBestBuy = 0
+                bestSellQuantity = 0
+                noBestSell = 0
+                for counter in range(0,4):
+                    bestBuyQuantity += float(stockFutureInfoHandler['symbolqueue']['Value'][counter]['BestBuyQuantity'])+1
+                    noBestBuy += float(stockFutureInfoHandler['symbolqueue']['Value'][counter]['NoBestBuy']) + 1
+                    bestSellQuantity += float(stockFutureInfoHandler['symbolqueue']['Value'][counter]['BestSellQuantity'])+1
+                    noBestSell += float(stockFutureInfoHandler['symbolqueue']['Value'][counter]['NoBestSell']) + 1
+
+                buyToToSellPower5Rows = float(bestBuyQuantity/noBestBuy)/(bestSellQuantity/noBestSell)
+                info['buyToToSellPower5Rows']=buyToToSellPower5Rows
+
+                # sendOrderurl='https://onlineplus.mofidonline.com/Handlers/GetAccountRemain.ashx'
+                # response = requests.get(sendOrderurl, headers=headers, verify = False, timeout=(10, 20))
+                # accountRemain = (jsons.loads(response.content))
+                # print(accountRemain)
+
+
+                #TODO: try except is not exist
+                url='https://core.tadbirrlc.com//AlmasDataHandler.ashx?{"Type":"getIndInstTrade","la":"Fa","nscCode":"'+symbolISIN+'","ZeroIfMarketIsCloesed":true}&jsoncallback='
+                response = requests.get(url, headers=headers, verify = False, timeout=(10, 20))
+                IndInstTrade = (jsons.loads(response.content))
+
+                realBuyVolume = int(IndInstTrade['IndBuyVolume'])
+                realBuyNumber = int(IndInstTrade['IndBuyNumber'])
+                realSellVolume = int(IndInstTrade['IndSellVolume'])
+                realSellNumber = int(IndInstTrade['IndSellNumber'])
+
+                legalBuyVolume = int(IndInstTrade['InsBuyVolume'])
+                legalBuyNumber = int(IndInstTrade['InsBuyNumber'])
+                legalSellVolume = int(IndInstTrade['InsSellVolume'])
+                legalSellNumber = int(IndInstTrade['InsSellNumber'])
+                realLegalDate = IndInstTrade['day']
+
+                info['realBuyVolume'] = realBuyVolume
+                info['realBuyNumber'] =realBuyNumber 
+                info['realSellVolume'] = realSellVolume
+                info['realSellNumber'] = realSellNumber
+
+                info['legalBuyVolume'] = legalBuyVolume 
+                info['legalBuyNumber'] = legalBuyNumber
+                info['legalSellVolume'] = legalSellVolume
+                info['legalSellNumber'] = legalSellNumber
+
+                buyToSellPowerToday = float(realBuyVolume/realBuyNumber+1)/float(realSellVolume/realSellNumber+1)
+                buyToSellLegalPowerToday = float(legalBuyVolume+1)/float(legalSellVolume+1)
+                legalBuyPercent=(legalBuyVolume+1)/(legalBuyVolume+realBuyVolume+1)
+                legalSellPercent=(legalSellVolume+1)/(legalSellVolume+realSellVolume+1)
+
+                info['buyToSellPowerToday'] = buyToSellPowerToday
+                info['buyToSellLegalPowerToday'] = buyToSellLegalPowerToday
+                info['legalBuyPercent'] = legalBuyPercent
+                info['legalSellPercent'] = legalSellPercent
+            except Exception as err:
+                #TODO:correct this after log!!
+                pass
+            return info
+        def saveInfoSymbolToDB(datas):
+            conn = sqlite3.connect(r"InfoSymbol.db")
+            c = conn.cursor()
+            CreateSymbolsTableQuery=\
+                """CREATE TABLE IF NOT EXISTS InfoSymbols(
+                id TEXT PRIMARY KEY,
+                isin TEXT,
+                lastTradePrice Integer,
+                closePrice Integer,
+                highRangePrice Integer,
+                lowRangePrice Integer,
+                yesterdayClosePrice Integer,
+                DateTime TEXT,
+                Date TEXT,
+                Time TEXT,
+                closePointRelativePrice FLOAT,
+                closePointRelativePercent FLOAT,
+                lastPointRelativePrice FLOAT,
+                lastPointRelativePercent FLOAT,
+                buyToToSellPower1Row FLOAT,
+                buyToToSellPower5Rows FLOAT,
+                realBuyVolume INTEGER,
+                realBuyNumber INTEGER,
+                realSellVolume INTEGER,
+                realSellNumber INTEGER,
+                legalBuyVolume INTEGER,
+                legalBuyNumber INTEGER,
+                legalSellVolume INTEGER,
+                legalSellNumber INTEGER,
+                buyToSellPowerToday FLOAT,
+                buyToSellLegalPowerToday FLOAT,
+                legalBuyPercent FLOAT,
+                legalSellPercent FLOAT
+                );"""
+            c = conn.cursor()
+            c.execute(CreateSymbolsTableQuery)
+            conn.commit()
+            c.execute("""insert or replace INTO InfoSymbols VALUES (
+                            :id,
+                            :isin,
+                            :lastTradePrice,
+                            :closePrice,
+                            :highRangePrice,
+                            :lowRangePrice,
+                            :yesterdayClosePrice,
+                            :DateTime,
+                            :Date,
+                            :Time,
+                            :closePointRelativePrice,
+                            :closePointRelativePercent,
+                            :lastPointRelativePrice,
+                            :lastPointRelativePercent,
+                            :buyToToSellPower1Row,
+                            :buyToToSellPower5Rows,
+                            :realBuyVolume,
+                            :realBuyNumber,
+                            :realSellVolume,
+                            :realSellNumber,
+                            :legalBuyVolume,
+                            :legalBuyNumber,
+                            :legalSellVolume,
+                            :legalSellNumber,
+                            :buyToSellPowerToday,
+                            :buyToSellLegalPowerToday,
+                            :legalBuyPercent,
+                            :legalSellPercent)""", datas)
+            conn.commit()
+            conn.close()
+
+        def loadInfoSymbolListFromDB():
+            conn = sqlite3.connect(r"InfoSymbol.db")
+            c = conn.cursor()
+            c.execute("SELECT * FROM InfoSymbols")
+            data=c.fetchall()
+            conn.close()
+            return data
+
+        datas = getInfoSymbol("IRO1TAMN0001")
+        saveInfoSymbolToDB(datas)
+        datas = getInfoSymbol("IRO1KVIR0001")
+        saveInfoSymbolToDB(datas)
+                
+        return False
+
+    while(True):
+        #todo: input parametes of function must correct
+        #todo: input parametes of function must connect to wordpress
+        time.sleep(1)
+        timeNow = datetime.datetime.now().replace(year=2020, month=1, day=1)
+        timeStartTarget = datetime.datetime.strptime(startDateTime, '%H:%M:%S.%f').replace(year=2020, month=1, day=1)
+        timeEndTarget = datetime.datetime.strptime(endDateTime, '%H:%M:%S.%f').replace(year=2020, month=1, day=1)
+
+        if (timeNow<timeStartTarget or timeNow>timeEndTarget):
+            continue
+        else:
+            if (monitoring(symbolISIN)):
+                # sendRequest(orderTypeInput, orderCountInput, orderPriceInput, orderisinInput, cookieFileIndexInput, orderCommentInput)
+                break
+
 if __name__ == "__main__":
-    name="slave"
+    name="Monitoring"
     cookieFileIndex = "-one"
     if(len(sys.argv)>1):
         name = sys.argv[1].strip().lower()
@@ -422,7 +709,10 @@ if __name__ == "__main__":
         loadChromeAndWaitToLoad()
     elif (name=="slave"):
         loadAllsendBuyRequest()
-
+    elif (name=="Monitoring"):
+        startDateTime = "08:30:00.000000"
+        endDateTime = "12:30:00.000000"
+        monitoringAndSendRequest(0, startDateTime, endDateTime, 0)
     logger.info('Waiting...')
 
     #TODO  13990102:CreateUI For operation in order file
